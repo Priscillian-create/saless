@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pa Gerry's Point of Sale System</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" sizes="32x32" href="icons/favicon-32.svg">
+    <meta name="theme-color" content="#e67e22">
+    
+    <!-- FIXED: Added the new meta tag and kept the old one for compatibility -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Pa Gerry's POS">
+    <meta name="application-name" content="Pa Gerry's POS">
+    <meta name="msapplication-TileColor" content="#e67e22">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fas fa-store"></i>
+                <span>Pa Gerry's</span>
+            </div>
+            <p class="login-subtitle">Point of Sale System</p>
+            
+            <div class="login-form">
+                <div class="login-header">
+                    <h2 class="login-title">Sign In</h2>
+                </div>
+                
+                <form id="emailLoginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" class="form-input" placeholder="Enter your email" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="Enter your password" autocomplete="current-password" required>
+                    </div>
+                    <div id="email-login-error" class="error-message"></div>
+                    <button type="submit" class="login-btn" id="emailLoginBtn">Sign In</button>
+                    <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot Password?</a>
+                    <div style="margin-top: 1rem; text-align:center;">
+                        <button type="button" class="logout-btn" id="installBtnLogin" style="display:none;"><i class="fas fa-download"></i> Install App</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="saleDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Sale Details</h3>
+                <button class="modal-close js-modal-close" data-target="saleDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body" id="saleDetailsBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="saleDetailsModal">Close</button>
+                <button class="btn btn-primary" id="deleteSaleBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp">
+        <!-- Header -->
+        <header>
+            <div class="header-container">
+                <div class="logo">
+                    <i class="fas fa-store"></i>
+                    <span>Pa Gerry's</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin User</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <div class="user-avatar" id="userAvatar">AU</div>
+                    <button class="logout-btn" id="installBtn" style="display:none;"><i class="fas fa-download"></i> Install App</button>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav>
+            <div class="nav-container">
+                <div class="nav-tabs">
+                    <div class="nav-tab grill active" data-section="grill">
+                        <i class="fas fa-fire"></i> Grill
+                    </div>
+                    <div class="nav-tab wholesale" data-section="wholesale">
+                        <i class="fas fa-boxes"></i> Wholesale
+                    </div>
+                    <div class="nav-tab building" data-section="building">
+                        <i class="fas fa-hammer"></i> Building Material
+                    </div>
+                    <div class="nav-tab food" data-section="food">
+                        <i class="fas fa-shopping-basket"></i> Food Supplies
+                    </div>
+                    <div class="nav-tab pos_mart" data-section="pos_mart">
+                        <i class="fas fa-credit-card"></i> POS (MART)
+                    </div>
+                    <div class="nav-tab pos1" data-section="pos1">
+                        <i class="fas fa-credit-card"></i> POS1
+                    </div>
+                    <div class="nav-tab" data-section="total-inventory">
+                        <i class="fas fa-warehouse"></i> Total Inventory
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Grill Section -->
+            <div id="grill-section" class="section-container active">
+                <div class="department-header">
+                    <div class="department-title grill">
+                        <i class="fas fa-fire"></i> Grill Department
+                    </div>
+                    <div class="department-stats">
+                        <div class="stat-item">
+                            <div class="stat-value grill-stat" id="grill-daily-sales">₦0.00</div>
+                            <div class="stat-label">Today's Sales</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value grill-stat" id="grill-daily-purchases">₦0.00</div>
+                            <div class="stat-label">Today's Purchases</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value grill-stat" id="grill-daily-profit">₦0.00</div>
+                            <div class="stat-label">Today's Profit</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value grill-stat" id="grill-low-stock">0</div>
+                            <div class="stat-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-nav">
+                    <div class="sub-nav-item grill active" data-view="pos">
+                        <i class="fas fa-cash-register"></i> Point of Sale
+                    </div>
+                    <div class="sub-nav-item grill" data-view="inventory">
+                        <i class="fas fa-warehouse"></i> Inventory
+                    </div>
+                    <div class="sub-nav-item grill" data-view="categories">
+                        <i class="fas fa-layer-group"></i> Categories
+                    </div>
+                    <div class="sub-nav-item grill" data-view="reports">
+                        <i class="fas fa-chart-bar"></i> Sales Reports
+                    </div>
+                    <div class="sub-nav-item grill" data-view="financial">
+                        <i class="fas fa-chart-line"></i> Financial Reports
+                    </div>
+                    
+                    <div class="sub-nav-item grill" data-view="suppliers">
+                        <i class="fas fa-truck"></i> Suppliers
+                    </div>
+                    <div class="sub-nav-item grill" data-view="purchase-orders">
+                        <i class="fas fa-file-invoice"></i> Purchase Orders
+                    </div>
+                    <div class="sub-nav-item grill" data-view="account">
+                        <i class="fas fa-user"></i> My Account
+                    </div>
+                </div>
+
+                <!-- Grill POS View -->
+                <div id="grill-pos-view" class="view-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Point of Sale</h2>
+                            <div>
+                                <button class="add-btn js-add-item-btn" data-section="grill">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pos-container">
+                            <div class="pos-left">
+                                <div class="pos-search-container">
+                                    <div class="pos-search-box">
+                                        <label for="grill-pos-search" class="sr-only">Search for products</label>
+                                        <i class="fas fa-search pos-search-icon"></i>
+                                        <input type="text" id="grill-pos-search" class="pos-search-input js-pos-search" data-section="grill" placeholder="Search for products..." autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="pos-search-results js-pos-search-results" data-section="grill">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Search for Products</h3>
+                                        <p class="empty-state-description">Type in the search box above to find products from your inventory.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pos-cart js-pos-cart" data-section="grill">
+                                <h3>Current Sale</h3>
+                                <div class="js-cart-items" data-section="grill">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Your Cart is Empty</h3>
+                                        <p class="empty-state-description">Search for products to add to your cart.</p>
+                                    </div>
+                                </div>
+                                <div class="cart-total">
+                                    <div class="total-row">
+                                        <span class="total-label">Subtotal:</span>
+                                        <span class="total-value js-subtotal" data-section="grill">₦0.00</span>
+                                    </div>
+                                    <div class="total-row">
+                                        <span class="total-label">Total:</span>
+                                        <span class="total-value js-total" data-section="grill">₦0.00</span>
+                                    </div>
+                                    <button class="checkout-btn grill js-checkout-btn" data-section="grill" disabled>Complete Sale</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grill Inventory View -->
+                <div id="grill-inventory-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Inventory</h2>
+                        </div>
+                        
+                        <!-- Category Inventory Summary -->
+                        <div class="category-inventory-summary" id="grill-category-summary">
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-total-products">0</div>
+                                <div class="category-stat-label">Total Products</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-total-value">₦0.00</div>
+                                <div class="category-stat-label">Total Value</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-total-cost">₦0.00</div>
+                                <div class="category-stat-label">Total Cost</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-total-profit">₦0.00</div>
+                                <div class="category-stat-label">Total Profit</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-profit-margin">0%</div>
+                                <div class="category-stat-label">Profit Margin</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-low-stock-count">0</div>
+                                <div class="category-stat-label">Low Stock</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-expiring-soon-count">0</div>
+                                <div class="category-stat-label">Expiring Soon</div>
+                            </div>
+                            <div class="category-stat-card grill-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="category-stat-value" id="grill-expired-count">0</div>
+                                <div class="category-stat-label">Expired</div>
+                            </div>
+                        </div>
+                        
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="grill-inventory-search" class="sr-only">Search inventory</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="grill-inventory-search" class="search-input js-inventory-search" data-section="grill" placeholder="Search inventory..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="grill" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="in-stock">
+                                    <i class="fas fa-check-circle"></i> In Stock
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="low-stock">
+                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="out-of-stock">
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="expired">
+                                    <i class="fas fa-exclamation-circle"></i> Expired
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="expiring-soon">
+                                    <i class="fas fa-clock"></i> Expiring Soon
+                                </button>
+                            </div>
+                            <button class="add-btn js-add-inventory-btn" data-section="grill">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="js-inventory-container" data-section="grill">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Products in Inventory</h3>
+                                <p class="empty-state-description">Start by adding products to your inventory. You can add details like name, price, cost, stock quantity, and expiry date.</p>
+                                <button class="btn btn-primary js-add-inventory-btn" data-section="grill">
+                                    <i class="fas fa-plus"></i> Add Your First Product
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="grill-categories-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Categories</h2>
+                        </div>
+                        <div class="section-tabs">
+                            <button class="section-tab js-section-tab active" data-section="grill" data-target-view="pos"><i class="fas fa-cash-register"></i> Point of Sale</button>
+                            <button class="section-tab js-section-tab" data-section="grill" data-target-view="inventory"><i class="fas fa-warehouse"></i> Inventory</button>
+                            <button class="section-tab js-section-tab" data-section="grill" data-target-view="reports"><i class="fas fa-chart-bar"></i> Sales Reports</button>
+                            <button class="section-tab js-section-tab" data-section="grill" data-target-view="financial"><i class="fas fa-chart-line"></i> Financial Reports</button>
+                            
+                            <button class="section-tab js-section-tab" data-section="grill" data-target-view="suppliers"><i class="fas fa-truck"></i> Suppliers</button>
+                            <button class="section-tab js-section-tab" data-section="grill" data-target-view="purchase-orders"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
+                            <button class="section-tab js-section-tab" data-section="grill" data-target-view="account"><i class="fas fa-user"></i> My Account</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grill Reports View -->
+                <div id="grill-reports-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Sales Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="grill-report-range">Date Range</label>
+                                <select class="filter-input" id="grill-report-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="grill-report-from">From</label>
+                                <input type="date" class="filter-input" id="grill-report-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="grill-report-to">To</label>
+                                <input type="date" class="filter-input" id="grill-report-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="reports-summary">
+                            <div class="summary-card">
+                                <div class="summary-icon grill-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="summary-value" id="grill-total-sales">₦0.00</div>
+                                <div class="summary-label">Total Sales</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon grill-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="summary-value" id="grill-total-transactions">0</div>
+                                <div class="summary-label">Transactions</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon grill-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="grill-avg-transaction">₦0.00</div>
+                                <div class="summary-label">Avg. Transaction</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon grill-icon">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="summary-value" id="grill-top-item">-</div>
+                                <div class="summary-label">Top Selling Item</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon grill-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="grill-total-profit">₦0.00</div>
+                                <div class="summary-label">Total Profit</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon grill-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="summary-value" id="grill-profit-margin">0%</div>
+                                <div class="summary-label">Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="top-sellers-block">
+                            <div class="card-subtitle">Top Selling Items</div>
+                            <div id="grill-top-sellers" class="top-sellers"></div>
+                        </div>
+                        <div class="top-sellers-block">
+                            <div class="card-subtitle">Top Selling Items</div>
+                            <div id="wholesale-top-sellers" class="top-sellers"></div>
+                        </div>
+                        <div class="top-sellers-block">
+                            <div class="card-subtitle">Top Selling Items</div>
+                            <div id="building-top-sellers" class="top-sellers"></div>
+                        </div>
+                        <div class="top-sellers-block">
+                            <div class="card-subtitle">Top Selling Items</div>
+                            <div id="food-top-sellers" class="top-sellers"></div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Sales Data Available</h3>
+                                <p class="empty-state-description">Start making sales to generate reports and see your business performance.</p>
+                            </div>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="grill"></div>
+                    </div>
+                </div>
+                
+
+                <!-- Grill Financial Reports View -->
+                <div id="grill-financial-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Financial Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="grill-financial-range">Date Range</label>
+                                <select class="filter-input" id="grill-financial-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="grill-financial-from">From</label>
+                                <input type="date" class="filter-input" id="grill-financial-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="grill-financial-to">To</label>
+                                <input type="date" class="filter-input" id="grill-financial-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="financial-summary">
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-total-sales">₦0.00</div>
+                                <div class="financial-label">Total Sales</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-total-purchases">₦0.00</div>
+                                <div class="financial-label">Total Purchases</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-total-profit">₦0.00</div>
+                                <div class="financial-label">Total Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-profit-margin">0%</div>
+                                <div class="financial-label">Profit Margin</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-inventory-value">₦0.00</div>
+                                <div class="financial-label">Inventory Value</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-inventory-cost">₦0.00</div>
+                                <div class="financial-label">Inventory Cost</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-inventory-profit">₦0.00</div>
+                                <div class="financial-label">Inventory Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon grill-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="grill-financial-inventory-profit-margin">0%</div>
+                                <div class="financial-label">Inventory Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="info-note">
+                            Total Sales and Purchases are cumulative. Total Profit equals Sales minus Purchases cost. Profit Margin is Profit divided by Sales. Inventory Value/Cost reflect current stock at selling price and cost price respectively.
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Financial Data Available</h3>
+                                <p class="empty-state-description">Start making sales and purchases to generate financial reports and see your business performance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grill Suppliers View -->
+                <div id="grill-suppliers-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Suppliers</h2>
+                            <button class="add-btn js-add-supplier-btn" data-section="grill">
+                                <i class="fas fa-plus"></i> Add Supplier
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="grill-suppliers-search" class="sr-only">Search suppliers</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="grill-suppliers-search" class="search-input js-suppliers-search" data-section="grill" placeholder="Search suppliers..." autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="js-suppliers-container" data-section="grill">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Suppliers Added</h3>
+                                <p class="empty-state-description">Start by adding suppliers to your department. You can add details like name, contact information, and products they supply.</p>
+                                <button class="btn btn-primary js-add-supplier-btn" data-section="grill">
+                                    <i class="fas fa-plus"></i> Add Your First Supplier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grill Purchase Orders View -->
+                <div id="grill-purchase-orders-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Purchase Orders</h2>
+                            <button class="add-btn js-add-purchase-order-btn" data-section="grill">
+                                <i class="fas fa-plus"></i> Create Purchase Order
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="grill-purchase-orders-search" class="sr-only">Search purchase orders</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="grill-purchase-orders-search" class="search-input js-purchase-orders-search" data-section="grill" placeholder="Search purchase orders..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="grill" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="pending">
+                                    <i class="fas fa-clock"></i> Pending
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="received">
+                                    <i class="fas fa-check-circle"></i> Received
+                                </button>
+                                <button class="filter-btn" data-section="grill" data-filter="cancelled">
+                                    <i class="fas fa-times-circle"></i> Cancelled
+                                </button>
+                            </div>
+                        </div>
+                        <div class="js-purchase-orders-container" data-section="grill">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Purchase Orders</h3>
+                                <p class="empty-state-description">Start by creating purchase orders for your department. You can add items, quantities, and select suppliers.</p>
+                                <button class="btn btn-primary js-add-purchase-order-btn" data-section="grill">
+                                    <i class="fas fa-plus"></i> Create Your First Purchase Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Grill Purchases</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="grill"></div>
+                    </div>
+                </div>
+
+                <!-- Grill Account View -->
+                <div id="grill-account-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">My Account</h2>
+                        </div>
+                        <div class="account-container">
+                            <div class="profile-card">
+                                <div class="profile-avatar" style="background-color: var(--grill-color);" id="grill-profile-avatar">AU</div>
+                                <h3 class="profile-name" id="grill-profile-name">Admin User</h3>
+                                <p class="profile-role">Grill Department Administrator</p>
+                                <div class="profile-stats">
+                                    <div class="profile-stat">
+                                        <div class="stat-value grill-stat" id="grill-user-transactions">0</div>
+                                        <div class="stat-label">Transactions</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value grill-stat" id="grill-user-sales">₦0.00</div>
+                                        <div class="stat-label">Sales</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value grill-stat" id="grill-user-purchases">₦0.00</div>
+                                        <div class="stat-label">Purchases</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value grill-stat" id="grill-user-net">₦0.00</div>
+                                        <div class="stat-label">Net Profit</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="account-form">
+                                <h3>Account Information</h3>
+                                <form id="grill-account-form">
+                                    <div class="form-group">
+                                        <label class="form-label" for="grill-fullname">Full Name</label>
+                                        <input type="text" class="form-input" value="Admin User" id="grill-fullname" autocomplete="name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="grill-email">Email</label>
+                                        <input type="email" class="form-input" value="admin@pagerrys.com" id="grill-email" autocomplete="email">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="grill-phone">Phone</label>
+                                        <input type="tel" class="form-input" value="+234 800 000 0000" id="grill-phone" autocomplete="tel">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="grill-role">Role</label>
+                                        <input type="text" class="form-input" value="Grill Department Administrator" id="grill-role" readonly>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" class="btn btn-secondary">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wholesale Section -->
+            <div id="wholesale-section" class="section-container">
+                <div class="department-header">
+                    <div class="department-title wholesale">
+                        <i class="fas fa-boxes"></i> Wholesale Department
+                    </div>
+                    <div class="department-stats">
+                        <div class="stat-item">
+                            <div class="stat-value wholesale-stat" id="wholesale-daily-sales">₦0.00</div>
+                            <div class="stat-label">Today's Sales</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value wholesale-stat" id="wholesale-daily-purchases">₦0.00</div>
+                            <div class="stat-label">Today's Purchases</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value wholesale-stat" id="wholesale-daily-profit">₦0.00</div>
+                            <div class="stat-label">Today's Profit</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value wholesale-stat" id="wholesale-low-stock">0</div>
+                            <div class="stat-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-nav">
+                    <div class="sub-nav-item wholesale active" data-view="pos">
+                        <i class="fas fa-cash-register"></i> Point of Sale
+                    </div>
+                    <div class="sub-nav-item wholesale" data-view="inventory">
+                        <i class="fas fa-warehouse"></i> Inventory
+                    </div>
+                    <div class="sub-nav-item wholesale" data-view="categories">
+                        <i class="fas fa-layer-group"></i> Categories
+                    </div>
+                    <div class="sub-nav-item wholesale" data-view="reports">
+                        <i class="fas fa-chart-bar"></i> Sales Reports
+                    </div>
+                    <div class="sub-nav-item wholesale" data-view="financial">
+                        <i class="fas fa-chart-line"></i> Financial Reports
+                    </div>
+                    
+                    <div class="sub-nav-item wholesale" data-view="suppliers">
+                        <i class="fas fa-truck"></i> Suppliers
+                    </div>
+                    <div class="sub-nav-item wholesale" data-view="purchase-orders">
+                        <i class="fas fa-file-invoice"></i> Purchase Orders
+                    </div>
+                    <div class="sub-nav-item wholesale" data-view="account">
+                        <i class="fas fa-user"></i> My Account
+                    </div>
+                </div>
+
+                <!-- Wholesale POS View -->
+                <div id="wholesale-pos-view" class="view-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Point of Sale</h2>
+                            <div>
+                                <button class="add-btn js-add-item-btn" data-section="wholesale">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pos-container">
+                            <div class="pos-left">
+                                <div class="pos-search-container">
+                                    <div class="pos-search-box">
+                                        <label for="wholesale-pos-search" class="sr-only">Search for products</label>
+                                        <i class="fas fa-search pos-search-icon"></i>
+                                        <input type="text" id="wholesale-pos-search" class="pos-search-input js-pos-search" data-section="wholesale" placeholder="Search for products..." autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="pos-search-results js-pos-search-results" data-section="wholesale">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Search for Products</h3>
+                                        <p class="empty-state-description">Type in the search box above to find products from your inventory.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pos-cart js-pos-cart" data-section="wholesale">
+                                <h3>Current Sale</h3>
+                                <div class="js-cart-items" data-section="wholesale">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Your Cart is Empty</h3>
+                                        <p class="empty-state-description">Search for products to add to your cart.</p>
+                                    </div>
+                                </div>
+                                <div class="cart-total">
+                                    <div class="total-row">
+                                        <span class="total-label">Subtotal:</span>
+                                        <span class="total-value js-subtotal" data-section="wholesale">₦0.00</span>
+                                    </div>
+                                    <div class="total-row">
+                                        <span class="total-label">Total:</span>
+                                        <span class="total-value js-total" data-section="wholesale">₦0.00</span>
+                                    </div>
+                                    <button class="checkout-btn wholesale js-checkout-btn" data-section="wholesale" disabled>Complete Sale</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wholesale Inventory View -->
+                <div id="wholesale-inventory-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Inventory</h2>
+                        </div>
+                        
+                        <!-- Category Inventory Summary -->
+                        <div class="category-inventory-summary" id="wholesale-category-summary">
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-total-products">0</div>
+                                <div class="category-stat-label">Total Products</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-total-value">₦0.00</div>
+                                <div class="category-stat-label">Total Value</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-total-cost">₦0.00</div>
+                                <div class="category-stat-label">Total Cost</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-total-profit">₦0.00</div>
+                                <div class="category-stat-label">Total Profit</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-profit-margin">0%</div>
+                                <div class="category-stat-label">Profit Margin</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-low-stock-count">0</div>
+                                <div class="category-stat-label">Low Stock</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-expiring-soon-count">0</div>
+                                <div class="category-stat-label">Expiring Soon</div>
+                            </div>
+                            <div class="category-stat-card wholesale-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="category-stat-value" id="wholesale-expired-count">0</div>
+                                <div class="category-stat-label">Expired</div>
+                            </div>
+                        </div>
+                        
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="wholesale-inventory-search" class="sr-only">Search inventory</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="wholesale-inventory-search" class="search-input js-inventory-search" data-section="wholesale" placeholder="Search inventory..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="wholesale" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="in-stock">
+                                    <i class="fas fa-check-circle"></i> In Stock
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="low-stock">
+                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="out-of-stock">
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="expired">
+                                    <i class="fas fa-exclamation-circle"></i> Expired
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="expiring-soon">
+                                    <i class="fas fa-clock"></i> Expiring Soon
+                                </button>
+                            </div>
+                            <button class="add-btn js-add-inventory-btn" data-section="wholesale">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="js-inventory-container" data-section="wholesale">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Products in Inventory</h3>
+                                <p class="empty-state-description">Start by adding products to your inventory. You can add details like name, price, cost, stock quantity, and expiry date.</p>
+                                <button class="btn btn-primary js-add-inventory-btn" data-section="wholesale">
+                                    <i class="fas fa-plus"></i> Add Your First Product
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wholesale-categories-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Categories</h2>
+                        </div>
+                        <div class="section-tabs">
+                            <button class="section-tab js-section-tab active" data-section="wholesale" data-target-view="pos"><i class="fas fa-cash-register"></i> Point of Sale</button>
+                            <button class="section-tab js-section-tab" data-section="wholesale" data-target-view="inventory"><i class="fas fa-warehouse"></i> Inventory</button>
+                            <button class="section-tab js-section-tab" data-section="wholesale" data-target-view="reports"><i class="fas fa-chart-bar"></i> Sales Reports</button>
+                            <button class="section-tab js-section-tab" data-section="wholesale" data-target-view="financial"><i class="fas fa-chart-line"></i> Financial Reports</button>
+                            
+                            <button class="section-tab js-section-tab" data-section="wholesale" data-target-view="suppliers"><i class="fas fa-truck"></i> Suppliers</button>
+                            <button class="section-tab js-section-tab" data-section="wholesale" data-target-view="purchase-orders"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
+                            <button class="section-tab js-section-tab" data-section="wholesale" data-target-view="account"><i class="fas fa-user"></i> My Account</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wholesale Reports View -->
+                <div id="wholesale-reports-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Sales Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="wholesale-report-range">Date Range</label>
+                                <select class="filter-input" id="wholesale-report-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="wholesale-report-from">From</label>
+                                <input type="date" class="filter-input" id="wholesale-report-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="wholesale-report-to">To</label>
+                                <input type="date" class="filter-input" id="wholesale-report-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="reports-summary">
+                            <div class="summary-card">
+                                <div class="summary-icon wholesale-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="summary-value" id="wholesale-total-sales">₦0.00</div>
+                                <div class="summary-label">Total Sales</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon wholesale-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="summary-value" id="wholesale-total-transactions">0</div>
+                                <div class="summary-label">Transactions</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon wholesale-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="wholesale-avg-transaction">₦0.00</div>
+                                <div class="summary-label">Avg. Transaction</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon wholesale-icon">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="summary-value" id="wholesale-top-item">-</div>
+                                <div class="summary-label">Top Selling Item</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon wholesale-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="wholesale-total-profit">₦0.00</div>
+                                <div class="summary-label">Total Profit</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon wholesale-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="summary-value" id="wholesale-profit-margin">0%</div>
+                                <div class="summary-label">Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Sales Data Available</h3>
+                                <p class="empty-state-description">Start making sales to generate reports and see your business performance.</p>
+                            </div>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="wholesale"></div>
+                    </div>
+                </div>
+                <div id="wholesale-sales-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Sales History</h2>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="wholesale"></div>
+                    </div>
+                </div>
+                <div id="wholesale-purchases-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Purchases History</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="wholesale"></div>
+                    </div>
+                </div>
+
+                <!-- Wholesale Financial Reports View -->
+                <div id="wholesale-financial-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Financial Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="wholesale-financial-range">Date Range</label>
+                                <select class="filter-input" id="wholesale-financial-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="wholesale-financial-from">From</label>
+                                <input type="date" class="filter-input" id="wholesale-financial-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="wholesale-financial-to">To</label>
+                                <input type="date" class="filter-input" id="wholesale-financial-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="financial-summary">
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-total-sales">₦0.00</div>
+                                <div class="financial-label">Total Sales</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-total-purchases">₦0.00</div>
+                                <div class="financial-label">Total Purchases</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-total-profit">₦0.00</div>
+                                <div class="financial-label">Total Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-profit-margin">0%</div>
+                                <div class="financial-label">Profit Margin</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-inventory-value">₦0.00</div>
+                                <div class="financial-label">Inventory Value</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-inventory-cost">₦0.00</div>
+                                <div class="financial-label">Inventory Cost</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-inventory-profit">₦0.00</div>
+                                <div class="financial-label">Inventory Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon wholesale-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="wholesale-financial-inventory-profit-margin">0%</div>
+                                <div class="financial-label">Inventory Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Financial Data Available</h3>
+                                <p class="empty-state-description">Start making sales and purchases to generate financial reports and see your business performance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wholesale Suppliers View -->
+                <div id="wholesale-suppliers-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Suppliers</h2>
+                            <button class="add-btn js-add-supplier-btn" data-section="wholesale">
+                                <i class="fas fa-plus"></i> Add Supplier
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="wholesale-suppliers-search" class="sr-only">Search suppliers</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="wholesale-suppliers-search" class="search-input js-suppliers-search" data-section="wholesale" placeholder="Search suppliers..." autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="js-suppliers-container" data-section="wholesale">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Suppliers Added</h3>
+                                <p class="empty-state-description">Start by adding suppliers to your department. You can add details like name, contact information, and products they supply.</p>
+                                <button class="btn btn-primary js-add-supplier-btn" data-section="wholesale">
+                                    <i class="fas fa-plus"></i> Add Your First Supplier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wholesale Purchase Orders View -->
+                <div id="wholesale-purchase-orders-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Purchase Orders</h2>
+                            <button class="add-btn js-add-purchase-order-btn" data-section="wholesale">
+                                <i class="fas fa-plus"></i> Create Purchase Order
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="wholesale-purchase-orders-search" class="sr-only">Search purchase orders</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="wholesale-purchase-orders-search" class="search-input js-purchase-orders-search" data-section="wholesale" placeholder="Search purchase orders..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="wholesale" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="pending">
+                                    <i class="fas fa-clock"></i> Pending
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="received">
+                                    <i class="fas fa-check-circle"></i> Received
+                                </button>
+                                <button class="filter-btn" data-section="wholesale" data-filter="cancelled">
+                                    <i class="fas fa-times-circle"></i> Cancelled
+                                </button>
+                            </div>
+                        </div>
+                        <div class="js-purchase-orders-container" data-section="wholesale">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Purchase Orders</h3>
+                                <p class="empty-state-description">Start by creating purchase orders for your department. You can add items, quantities, and select suppliers.</p>
+                                <button class="btn btn-primary js-add-purchase-order-btn" data-section="wholesale">
+                                    <i class="fas fa-plus"></i> Create Your First Purchase Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Wholesale Purchases</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="wholesale"></div>
+                    </div>
+                </div>
+
+                <!-- Wholesale Account View -->
+                <div id="wholesale-account-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">My Account</h2>
+                        </div>
+                        <div class="account-container">
+                            <div class="profile-card">
+                                <div class="profile-avatar" style="background-color: var(--wholesale-color);" id="wholesale-profile-avatar">AU</div>
+                                <h3 class="profile-name" id="wholesale-profile-name">Admin User</h3>
+                                <p class="profile-role">Wholesale Department Administrator</p>
+                                <div class="profile-stats">
+                                    <div class="profile-stat">
+                                        <div class="stat-value wholesale-stat" id="wholesale-user-transactions">0</div>
+                                        <div class="stat-label">Transactions</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value wholesale-stat" id="wholesale-user-sales">₦0.00</div>
+                                        <div class="stat-label">Sales</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value wholesale-stat" id="wholesale-user-purchases">₦0.00</div>
+                                        <div class="stat-label">Purchases</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value wholesale-stat" id="wholesale-user-net">₦0.00</div>
+                                        <div class="stat-label">Net Profit</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="account-form">
+                                <h3>Account Information</h3>
+                                <form id="wholesale-account-form">
+                                    <div class="form-group">
+                                        <label class="form-label" for="wholesale-fullname">Full Name</label>
+                                        <input type="text" class="form-input" value="Admin User" id="wholesale-fullname" autocomplete="name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="wholesale-email">Email</label>
+                                        <input type="email" class="form-input" value="admin@pagerrys.com" id="wholesale-email" autocomplete="email">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="wholesale-phone">Phone</label>
+                                        <input type="tel" class="form-input" value="+234 800 000 0000" id="wholesale-phone" autocomplete="tel">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="wholesale-role">Role</label>
+                                        <input type="text" class="form-input" value="Wholesale Department Administrator" id="wholesale-role" readonly>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" class="btn btn-secondary">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Building Material Section -->
+            <div id="building-section" class="section-container">
+                <div class="department-header">
+                    <div class="department-title building">
+                        <i class="fas fa-hammer"></i> Building Material Department
+                    </div>
+                    <div class="department-stats">
+                        <div class="stat-item">
+                            <div class="stat-value building-stat" id="building-daily-sales">₦0.00</div>
+                            <div class="stat-label">Today's Sales</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value building-stat" id="building-daily-purchases">₦0.00</div>
+                            <div class="stat-label">Today's Purchases</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value building-stat" id="building-daily-profit">₦0.00</div>
+                            <div class="stat-label">Today's Profit</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value building-stat" id="building-low-stock">0</div>
+                            <div class="stat-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-nav">
+                    <div class="sub-nav-item building active" data-view="pos">
+                        <i class="fas fa-cash-register"></i> Point of Sale
+                    </div>
+                    <div class="sub-nav-item building" data-view="inventory">
+                        <i class="fas fa-warehouse"></i> Inventory
+                    </div>
+                    <div class="sub-nav-item building" data-view="categories">
+                        <i class="fas fa-layer-group"></i> Categories
+                    </div>
+                    <div class="sub-nav-item building" data-view="reports">
+                        <i class="fas fa-chart-bar"></i> Sales Reports
+                    </div>
+                    <div class="sub-nav-item building" data-view="financial">
+                        <i class="fas fa-chart-line"></i> Financial Reports
+                    </div>
+                    
+                    <div class="sub-nav-item building" data-view="suppliers">
+                        <i class="fas fa-truck"></i> Suppliers
+                    </div>
+                    <div class="sub-nav-item building" data-view="purchase-orders">
+                        <i class="fas fa-file-invoice"></i> Purchase Orders
+                    </div>
+                    <div class="sub-nav-item building" data-view="account">
+                        <i class="fas fa-user"></i> My Account
+                    </div>
+                </div>
+
+                <!-- Building POS View -->
+                <div id="building-pos-view" class="view-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Point of Sale</h2>
+                            <div>
+                                <button class="add-btn js-add-item-btn" data-section="building">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pos-container">
+                            <div class="pos-left">
+                                <div class="pos-search-container">
+                                    <div class="pos-search-box">
+                                        <label for="building-pos-search" class="sr-only">Search for products</label>
+                                        <i class="fas fa-search pos-search-icon"></i>
+                                        <input type="text" id="building-pos-search" class="pos-search-input js-pos-search" data-section="building" placeholder="Search for products..." autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="pos-search-results js-pos-search-results" data-section="building">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Search for Products</h3>
+                                        <p class="empty-state-description">Type in the search box above to find products from your inventory.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pos-cart js-pos-cart" data-section="building">
+                                <h3>Current Sale</h3>
+                                <div class="js-cart-items" data-section="building">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Your Cart is Empty</h3>
+                                        <p class="empty-state-description">Search for products to add to your cart.</p>
+                                    </div>
+                                </div>
+                                <div class="cart-total">
+                                    <div class="total-row">
+                                        <span class="total-label">Subtotal:</span>
+                                        <span class="total-value js-subtotal" data-section="building">₦0.00</span>
+                                    </div>
+                                    <div class="total-row">
+                                        <span class="total-label">Total:</span>
+                                        <span class="total-value js-total" data-section="building">₦0.00</span>
+                                    </div>
+                                    <button class="checkout-btn building js-checkout-btn" data-section="building" disabled>Complete Sale</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Building Inventory View -->
+                <div id="building-inventory-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Inventory</h2>
+                        </div>
+                        
+                        <!-- Category Inventory Summary -->
+                        <div class="category-inventory-summary" id="building-category-summary">
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-total-products">0</div>
+                                <div class="category-stat-label">Total Products</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-total-value">₦0.00</div>
+                                <div class="category-stat-label">Total Value</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-total-cost">₦0.00</div>
+                                <div class="category-stat-label">Total Cost</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-total-profit">₦0.00</div>
+                                <div class="category-stat-label">Total Profit</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-profit-margin">0%</div>
+                                <div class="category-stat-label">Profit Margin</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-low-stock-count">0</div>
+                                <div class="category-stat-label">Low Stock</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-expiring-soon-count">0</div>
+                                <div class="category-stat-label">Expiring Soon</div>
+                            </div>
+                            <div class="category-stat-card building-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="category-stat-value" id="building-expired-count">0</div>
+                                <div class="category-stat-label">Expired</div>
+                            </div>
+                        </div>
+                        
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="building-inventory-search" class="sr-only">Search inventory</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="building-inventory-search" class="search-input js-inventory-search" data-section="building" placeholder="Search inventory..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="building" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="in-stock">
+                                    <i class="fas fa-check-circle"></i> In Stock
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="low-stock">
+                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="out-of-stock">
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="expired">
+                                    <i class="fas fa-exclamation-circle"></i> Expired
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="expiring-soon">
+                                    <i class="fas fa-clock"></i> Expiring Soon
+                                </button>
+                            </div>
+                            <button class="add-btn js-add-inventory-btn" data-section="building">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="js-inventory-container" data-section="building">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Products in Inventory</h3>
+                                <p class="empty-state-description">Start by adding products to your inventory. You can add details like name, price, cost, stock quantity, and expiry date.</p>
+                                <button class="btn btn-primary js-add-inventory-btn" data-section="building">
+                                    <i class="fas fa-plus"></i> Add Your First Product
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="building-categories-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Categories</h2>
+                        </div>
+                        <div class="section-tabs">
+                            <button class="section-tab js-section-tab active" data-section="building" data-target-view="pos"><i class="fas fa-cash-register"></i> Point of Sale</button>
+                            <button class="section-tab js-section-tab" data-section="building" data-target-view="inventory"><i class="fas fa-warehouse"></i> Inventory</button>
+                            <button class="section-tab js-section-tab" data-section="building" data-target-view="reports"><i class="fas fa-chart-bar"></i> Sales Reports</button>
+                            <button class="section-tab js-section-tab" data-section="building" data-target-view="financial"><i class="fas fa-chart-line"></i> Financial Reports</button>
+                            
+                            <button class="section-tab js-section-tab" data-section="building" data-target-view="suppliers"><i class="fas fa-truck"></i> Suppliers</button>
+                            <button class="section-tab js-section-tab" data-section="building" data-target-view="purchase-orders"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
+                            <button class="section-tab js-section-tab" data-section="building" data-target-view="account"><i class="fas fa-user"></i> My Account</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Building Reports View -->
+                <div id="building-reports-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Sales Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="building-report-range">Date Range</label>
+                                <select class="filter-input" id="building-report-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="building-report-from">From</label>
+                                <input type="date" class="filter-input" id="building-report-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="building-report-to">To</label>
+                                <input type="date" class="filter-input" id="building-report-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="reports-summary">
+                            <div class="summary-card">
+                                <div class="summary-icon building-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="summary-value" id="building-total-sales">₦0.00</div>
+                                <div class="summary-label">Total Sales</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon building-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="summary-value" id="building-total-transactions">0</div>
+                                <div class="summary-label">Transactions</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon building-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="building-avg-transaction">₦0.00</div>
+                                <div class="summary-label">Avg. Transaction</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon building-icon">
+                                    <i class="fas fa-hammer"></i>
+                                </div>
+                                <div class="summary-value" id="building-top-item">-</div>
+                                <div class="summary-label">Top Selling Item</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon building-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="building-total-profit">₦0.00</div>
+                                <div class="summary-label">Total Profit</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon building-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="summary-value" id="building-profit-margin">0%</div>
+                                <div class="summary-label">Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Sales Data Available</h3>
+                                <p class="empty-state-description">Start making sales to generate reports and see your business performance.</p>
+                            </div>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="building"></div>
+                    </div>
+                </div>
+                <div id="building-sales-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Sales History</h2>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="building"></div>
+                    </div>
+                </div>
+                <div id="building-purchases-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Purchases History</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="building"></div>
+                    </div>
+                </div>
+
+                <!-- Building Financial Reports View -->
+                <div id="building-financial-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Financial Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="building-financial-range">Date Range</label>
+                                <select class="filter-input" id="building-financial-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="building-financial-from">From</label>
+                                <input type="date" class="filter-input" id="building-financial-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="building-financial-to">To</label>
+                                <input type="date" class="filter-input" id="building-financial-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="financial-summary">
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-total-sales">₦0.00</div>
+                                <div class="financial-label">Total Sales</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-total-purchases">₦0.00</div>
+                                <div class="financial-label">Total Purchases</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-total-profit">₦0.00</div>
+                                <div class="financial-label">Total Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-profit-margin">0%</div>
+                                <div class="financial-label">Profit Margin</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-inventory-value">₦0.00</div>
+                                <div class="financial-label">Inventory Value</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-inventory-cost">₦0.00</div>
+                                <div class="financial-label">Inventory Cost</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-inventory-profit">₦0.00</div>
+                                <div class="financial-label">Inventory Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon building-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="building-financial-inventory-profit-margin">0%</div>
+                                <div class="financial-label">Inventory Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Financial Data Available</h3>
+                                <p class="empty-state-description">Start making sales and purchases to generate financial reports and see your business performance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Building Suppliers View -->
+                <div id="building-suppliers-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Suppliers</h2>
+                            <button class="add-btn js-add-supplier-btn" data-section="building">
+                                <i class="fas fa-plus"></i> Add Supplier
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="building-suppliers-search" class="sr-only">Search suppliers</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="building-suppliers-search" class="search-input js-suppliers-search" data-section="building" placeholder="Search suppliers..." autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="js-suppliers-container" data-section="building">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Suppliers Added</h3>
+                                <p class="empty-state-description">Start by adding suppliers to your department. You can add details like name, contact information, and products they supply.</p>
+                                <button class="btn btn-primary js-add-supplier-btn" data-section="building">
+                                    <i class="fas fa-plus"></i> Add Your First Supplier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Building Purchase Orders View -->
+                <div id="building-purchase-orders-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Material Purchase Orders</h2>
+                            <button class="add-btn js-add-purchase-order-btn" data-section="building">
+                                <i class="fas fa-plus"></i> Create Purchase Order
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="building-purchase-orders-search" class="sr-only">Search purchase orders</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="building-purchase-orders-search" class="search-input js-purchase-orders-search" data-section="building" placeholder="Search purchase orders..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="building" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="pending">
+                                    <i class="fas fa-clock"></i> Pending
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="received">
+                                    <i class="fas fa-check-circle"></i> Received
+                                </button>
+                                <button class="filter-btn" data-section="building" data-filter="cancelled">
+                                    <i class="fas fa-times-circle"></i> Cancelled
+                                </button>
+                            </div>
+                        </div>
+                        <div class="js-purchase-orders-container" data-section="building">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Purchase Orders</h3>
+                                <p class="empty-state-description">Start by creating purchase orders for your department. You can add items, quantities, and select suppliers.</p>
+                                <button class="btn btn-primary js-add-purchase-order-btn" data-section="building">
+                                    <i class="fas fa-plus"></i> Create Your First Purchase Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Building Purchases</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="building"></div>
+                    </div>
+                </div>
+
+                <!-- Building Account View -->
+                <div id="building-account-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">My Account</h2>
+                        </div>
+                        <div class="account-container">
+                            <div class="profile-card">
+                                <div class="profile-avatar" style="background-color: var(--building-color);" id="building-profile-avatar">AU</div>
+                                <h3 class="profile-name" id="building-profile-name">Admin User</h3>
+                                <p class="profile-role">Building Material Department Administrator</p>
+                                <div class="profile-stats">
+                                    <div class="profile-stat">
+                                        <div class="stat-value building-stat" id="building-user-transactions">0</div>
+                                        <div class="stat-label">Transactions</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value building-stat" id="building-user-sales">₦0.00</div>
+                                        <div class="stat-label">Sales</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value building-stat" id="building-user-purchases">₦0.00</div>
+                                        <div class="stat-label">Purchases</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value building-stat" id="building-user-net">₦0.00</div>
+                                        <div class="stat-label">Net Profit</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="account-form">
+                                <h3>Account Information</h3>
+                                <form id="building-account-form">
+                                    <div class="form-group">
+                                        <label class="form-label" for="building-fullname">Full Name</label>
+                                        <input type="text" class="form-input" value="Admin User" id="building-fullname" autocomplete="name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="building-email">Email</label>
+                                        <input type="email" class="form-input" value="admin@pagerrys.com" id="building-email" autocomplete="email">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="building-phone">Phone</label>
+                                        <input type="tel" class="form-input" value="+234 800 000 0000" id="building-phone" autocomplete="tel">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="building-role">Role</label>
+                                        <input type="text" class="form-input" value="Building Material Department Administrator" id="building-role" readonly>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" class="btn btn-secondary">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Food Supplies Section -->
+            <div id="food-section" class="section-container">
+                <div class="department-header">
+                    <div class="department-title food">
+                        <i class="fas fa-shopping-basket"></i> Food Supplies Department
+                    </div>
+                    <div class="department-stats">
+                        <div class="stat-item">
+                            <div class="stat-value food-stat" id="food-daily-sales">₦0.00</div>
+                            <div class="stat-label">Today's Sales</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value food-stat" id="food-daily-purchases">₦0.00</div>
+                            <div class="stat-label">Today's Purchases</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value food-stat" id="food-daily-profit">₦0.00</div>
+                            <div class="stat-label">Today's Profit</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value food-stat" id="food-low-stock">0</div>
+                            <div class="stat-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-nav">
+                    <div class="sub-nav-item food active" data-view="pos">
+                        <i class="fas fa-cash-register"></i> Point of Sale
+                    </div>
+                    <div class="sub-nav-item food" data-view="inventory">
+                        <i class="fas fa-warehouse"></i> Inventory
+                    </div>
+                    <div class="sub-nav-item food" data-view="categories">
+                        <i class="fas fa-layer-group"></i> Categories
+                    </div>
+                    <div class="sub-nav-item food" data-view="reports">
+                        <i class="fas fa-chart-bar"></i> Sales Reports
+                    </div>
+                    <div class="sub-nav-item food" data-view="financial">
+                        <i class="fas fa-chart-line"></i> Financial Reports
+                    </div>
+                    
+                    <div class="sub-nav-item food" data-view="suppliers">
+                        <i class="fas fa-truck"></i> Suppliers
+                    </div>
+                    <div class="sub-nav-item food" data-view="purchase-orders">
+                        <i class="fas fa-file-invoice"></i> Purchase Orders
+                    </div>
+                    <div class="sub-nav-item food" data-view="account">
+                        <i class="fas fa-user"></i> My Account
+                    </div>
+                </div>
+
+                <!-- Food POS View -->
+                <div id="food-pos-view" class="view-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Point of Sale</h2>
+                            <div>
+                                <button class="add-btn js-add-item-btn" data-section="food">
+                                    <i class="fas fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pos-container">
+                            <div class="pos-left">
+                                <div class="pos-search-container">
+                                    <div class="pos-search-box">
+                                        <label for="food-pos-search" class="sr-only">Search for products</label>
+                                        <i class="fas fa-search pos-search-icon"></i>
+                                        <input type="text" id="food-pos-search" class="pos-search-input js-pos-search" data-section="food" placeholder="Search for products..." autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="pos-search-results js-pos-search-results" data-section="food">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Search for Products</h3>
+                                        <p class="empty-state-description">Type in the search box above to find products from your inventory.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pos-cart js-pos-cart" data-section="food">
+                                <h3>Current Sale</h3>
+                                <div class="js-cart-items" data-section="food">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <h3 class="empty-state-title">Your Cart is Empty</h3>
+                                        <p class="empty-state-description">Search for products to add to your cart.</p>
+                                    </div>
+                                </div>
+                                <div class="cart-total">
+                                    <div class="total-row">
+                                        <span class="total-label">Subtotal:</span>
+                                        <span class="total-value js-subtotal" data-section="food">₦0.00</span>
+                                    </div>
+                                    <div class="total-row">
+                                        <span class="total-label">Total:</span>
+                                        <span class="total-value js-total" data-section="food">₦0.00</span>
+                                    </div>
+                                    <button class="checkout-btn food js-checkout-btn" data-section="food" disabled>Complete Sale</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food Inventory View -->
+                <div id="food-inventory-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Inventory</h2>
+                        </div>
+                        
+                        <!-- Category Inventory Summary -->
+                        <div class="category-inventory-summary" id="food-category-summary">
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-total-products">0</div>
+                                <div class="category-stat-label">Total Products</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-total-value">₦0.00</div>
+                                <div class="category-stat-label">Total Value</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-total-cost">₦0.00</div>
+                                <div class="category-stat-label">Total Cost</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-total-profit">₦0.00</div>
+                                <div class="category-stat-label">Total Profit</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-profit-margin">0%</div>
+                                <div class="category-stat-label">Profit Margin</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-low-stock-count">0</div>
+                                <div class="category-stat-label">Low Stock</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-expiring-soon-count">0</div>
+                                <div class="category-stat-label">Expiring Soon</div>
+                            </div>
+                            <div class="category-stat-card food-stat-card">
+                                <div class="category-stat-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="category-stat-value" id="food-expired-count">0</div>
+                                <div class="category-stat-label">Expired</div>
+                            </div>
+                        </div>
+                        
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="food-inventory-search" class="sr-only">Search inventory</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="food-inventory-search" class="search-input js-inventory-search" data-section="food" placeholder="Search inventory..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="food" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="in-stock">
+                                    <i class="fas fa-check-circle"></i> In Stock
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="low-stock">
+                                    <i class="fas fa-exclamation-triangle"></i> Low Stock
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="out-of-stock">
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="expired">
+                                    <i class="fas fa-exclamation-circle"></i> Expired
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="expiring-soon">
+                                    <i class="fas fa-clock"></i> Expiring Soon
+                                </button>
+                            </div>
+                            <button class="add-btn js-add-inventory-btn" data-section="food">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="js-inventory-container" data-section="food">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Products in Inventory</h3>
+                                <p class="empty-state-description">Start by adding products to your inventory. You can add details like name, price, cost, stock quantity, and expiry date.</p>
+                                <button class="btn btn-primary js-add-inventory-btn" data-section="food">
+                                    <i class="fas fa-plus"></i> Add Your First Product
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="food-categories-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Categories</h2>
+                        </div>
+                        <div class="section-tabs">
+                            <button class="section-tab js-section-tab active" data-section="food" data-target-view="pos"><i class="fas fa-cash-register"></i> Point of Sale</button>
+                            <button class="section-tab js-section-tab" data-section="food" data-target-view="inventory"><i class="fas fa-warehouse"></i> Inventory</button>
+                            <button class="section-tab js-section-tab" data-section="food" data-target-view="reports"><i class="fas fa-chart-bar"></i> Sales Reports</button>
+                            <button class="section-tab js-section-tab" data-section="food" data-target-view="financial"><i class="fas fa-chart-line"></i> Financial Reports</button>
+                            
+                            <button class="section-tab js-section-tab" data-section="food" data-target-view="suppliers"><i class="fas fa-truck"></i> Suppliers</button>
+                            <button class="section-tab js-section-tab" data-section="food" data-target-view="purchase-orders"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
+                            <button class="section-tab js-section-tab" data-section="food" data-target-view="account"><i class="fas fa-user"></i> My Account</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food Reports View -->
+                <div id="food-reports-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Sales Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="food-report-range">Date Range</label>
+                                <select class="filter-input" id="food-report-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="food-report-from">From</label>
+                                <input type="date" class="filter-input" id="food-report-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="food-report-to">To</label>
+                                <input type="date" class="filter-input" id="food-report-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="reports-summary">
+                            <div class="summary-card">
+                                <div class="summary-icon food-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="summary-value" id="food-total-sales">₦0.00</div>
+                                <div class="summary-label">Total Sales</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon food-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="summary-value" id="food-total-transactions">0</div>
+                                <div class="summary-label">Transactions</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon food-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="food-avg-transaction">₦0.00</div>
+                                <div class="summary-label">Avg. Transaction</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon food-icon">
+                                    <i class="fas fa-shopping-basket"></i>
+                                </div>
+                                <div class="summary-value" id="food-top-item">-</div>
+                                <div class="summary-label">Top Selling Item</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon food-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="summary-value" id="food-total-profit">₦0.00</div>
+                                <div class="summary-label">Total Profit</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-icon food-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="summary-value" id="food-profit-margin">0%</div>
+                                <div class="summary-label">Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Sales Data Available</h3>
+                                <p class="empty-state-description">Start making sales to generate reports and see your business performance.</p>
+                            </div>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="food"></div>
+                    </div>
+                </div>
+                <div id="food-sales-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Sales History</h2>
+                        </div>
+                        <div class="card-body js-sales-container" data-section="food"></div>
+                    </div>
+                </div>
+                <div id="food-purchases-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Purchases History</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="food"></div>
+                    </div>
+                </div>
+
+                <!-- Food Financial Reports View -->
+                <div id="food-financial-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Financial Reports</h2>
+                        </div>
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label class="filter-label" for="food-financial-range">Date Range</label>
+                                <select class="filter-input" id="food-financial-range" autocomplete="off">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="food-financial-from">From</label>
+                                <input type="date" class="filter-input" id="food-financial-from" autocomplete="off">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="food-financial-to">To</label>
+                                <input type="date" class="filter-input" id="food-financial-to" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="financial-summary">
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-total-sales">₦0.00</div>
+                                <div class="financial-label">Total Sales</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-total-purchases">₦0.00</div>
+                                <div class="financial-label">Total Purchases</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-total-profit">₦0.00</div>
+                                <div class="financial-label">Total Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-profit-margin">0%</div>
+                                <div class="financial-label">Profit Margin</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-warehouse"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-inventory-value">₦0.00</div>
+                                <div class="financial-label">Inventory Value</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-inventory-cost">₦0.00</div>
+                                <div class="financial-label">Inventory Cost</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-inventory-profit">₦0.00</div>
+                                <div class="financial-label">Inventory Profit</div>
+                            </div>
+                            <div class="financial-card">
+                                <div class="financial-icon food-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="financial-value" id="food-financial-inventory-profit-margin">0%</div>
+                                <div class="financial-label">Inventory Profit Margin</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Financial Data Available</h3>
+                                <p class="empty-state-description">Start making sales and purchases to generate financial reports and see your business performance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food Suppliers View -->
+                <div id="food-suppliers-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Suppliers</h2>
+                            <button class="add-btn js-add-supplier-btn" data-section="food">
+                                <i class="fas fa-plus"></i> Add Supplier
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="food-suppliers-search" class="sr-only">Search suppliers</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="food-suppliers-search" class="search-input js-suppliers-search" data-section="food" placeholder="Search suppliers..." autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="js-suppliers-container" data-section="food">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Suppliers Added</h3>
+                                <p class="empty-state-description">Start by adding suppliers to your department. You can add details like name, contact information, and products they supply.</p>
+                                <button class="btn btn-primary js-add-supplier-btn" data-section="food">
+                                    <i class="fas fa-plus"></i> Add Your First Supplier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food Purchase Orders View -->
+                <div id="food-purchase-orders-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Supplies Purchase Orders</h2>
+                            <button class="add-btn js-add-purchase-order-btn" data-section="food">
+                                <i class="fas fa-plus"></i> Create Purchase Order
+                            </button>
+                        </div>
+                        <div class="inventory-header">
+                            <div class="search-box">
+                                <label for="food-purchase-orders-search" class="sr-only">Search purchase orders</label>
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="food-purchase-orders-search" class="search-input js-purchase-orders-search" data-section="food" placeholder="Search purchase orders..." autocomplete="off">
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-section="food" data-filter="all">
+                                    <i class="fas fa-list"></i> All
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="pending">
+                                    <i class="fas fa-clock"></i> Pending
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="received">
+                                    <i class="fas fa-check-circle"></i> Received
+                                </button>
+                                <button class="filter-btn" data-section="food" data-filter="cancelled">
+                                    <i class="fas fa-times-circle"></i> Cancelled
+                                </button>
+                            </div>
+                        </div>
+                        <div class="js-purchase-orders-container" data-section="food">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <h3 class="empty-state-title">No Purchase Orders</h3>
+                                <p class="empty-state-description">Start by creating purchase orders for your department. You can add items, quantities, and select suppliers.</p>
+                                <button class="btn btn-primary js-add-purchase-order-btn" data-section="food">
+                                    <i class="fas fa-plus"></i> Create Your First Purchase Order
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Food Purchases</h2>
+                        </div>
+                        <div class="card-body js-purchases-container" data-section="food"></div>
+                    </div>
+                </div>
+
+                <!-- Food Account View -->
+                <div id="food-account-view" class="view-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">My Account</h2>
+                        </div>
+                        <div class="account-container">
+                            <div class="profile-card">
+                                <div class="profile-avatar" style="background-color: var(--food-color);" id="food-profile-avatar">AU</div>
+                                <h3 class="profile-name" id="food-profile-name">Admin User</h3>
+                                <p class="profile-role">Food Supplies Department Administrator</p>
+                                <div class="profile-stats">
+                                    <div class="profile-stat">
+                                        <div class="stat-value food-stat" id="food-user-transactions">0</div>
+                                        <div class="stat-label">Transactions</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value food-stat" id="food-user-sales">₦0.00</div>
+                                        <div class="stat-label">Sales</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value food-stat" id="food-user-purchases">₦0.00</div>
+                                        <div class="stat-label">Purchases</div>
+                                    </div>
+                                    <div class="profile-stat">
+                                        <div class="stat-value food-stat" id="food-user-net">₦0.00</div>
+                                        <div class="stat-label">Net Profit</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="account-form">
+                                <h3>Account Information</h3>
+                                <form id="food-account-form">
+                                    <div class="form-group">
+                                        <label class="form-label" for="food-fullname">Full Name</label>
+                                        <input type="text" class="form-input" value="Admin User" id="food-fullname" autocomplete="name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="food-email">Email</label>
+                                        <input type="email" class="form-input" value="admin@pagerrys.com" id="food-email" autocomplete="email">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="food-phone">Phone</label>
+                                        <input type="tel" class="form-input" value="+234 800 000 0000" id="food-phone" autocomplete="tel">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="food-role">Role</label>
+                                        <input type="text" class="form-input" value="Food Supplies Department Administrator" id="food-role" readonly>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" class="btn btn-secondary">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Inventory Section -->
+            <div id="total-inventory-section" class="section-container">
+                <div class="department-header">
+                    <div class="department-title">
+                        <i class="fas fa-warehouse"></i> Total Inventory
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">All Products</h2>
+                    </div>
+                    
+                    <div class="total-inventory-stats">
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-products">0</div>
+                            <div class="total-stat-label">Total Products</div>
+                        </div>
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-value">₦0.00</div>
+                            <div class="total-stat-label">Total Value</div>
+                        </div>
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-cost">₦0.00</div>
+                            <div class="total-stat-label">Total Cost</div>
+                        </div>
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-profit">₦0.00</div>
+                            <div class="total-stat-label">Total Profit</div>
+                        </div>
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-profit-margin">0%</div>
+                            <div class="total-stat-label">Profit Margin</div>
+                        </div>
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-expired">0</div>
+                            <div class="total-stat-label">Expired Items</div>
+                        </div>
+                        <div class="total-stat-card">
+                            <div class="total-stat-value" id="total-expiring-soon">0</div>
+                            <div class="total-stat-label">Expiring Soon</div>
+                        </div>
+                    </div>
+
+                    <div class="inventory-header">
+                        <div class="search-box">
+                            <label for="total-inventory-search" class="sr-only">Search inventory</label>
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="total-inventory-search" class="search-input js-total-inventory-search" placeholder="Search all inventory..." autocomplete="off">
+                        </div>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="all">
+                                <i class="fas fa-list"></i> All
+                            </button>
+                            <button class="filter-btn" data-filter="in-stock">
+                                <i class="fas fa-check-circle"></i> In Stock
+                            </button>
+                            <button class="filter-btn" data-filter="low-stock">
+                                <i class="fas fa-exclamation-triangle"></i> Low Stock
+                            </button>
+                            <button class="filter-btn" data-filter="out-of-stock">
+                                <i class="fas fa-times-circle"></i> Out of Stock
+                            </button>
+                            <button class="filter-btn" data-filter="expired">
+                                <i class="fas fa-exclamation-circle"></i> Expired
+                            </button>
+                            <button class="filter-btn" data-filter="expiring-soon">
+                                <i class="fas fa-clock"></i> Expiring Soon
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="js-total-inventory-container">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-warehouse"></i>
+                            </div>
+                            <h3 class="empty-state-title">No Products in Inventory</h3>
+                            <p class="empty-state-description">Start by adding products to your inventory. You can add details like name, price, cost, stock quantity, and expiry date.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Item</h3>
+                <button class="modal-close js-modal-close" data-target="addItemModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <div class="form-group">
+                        <label class="form-label" for="addItemName">Item Name</label>
+                        <input type="text" class="form-input" id="addItemName" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addItemPrice">Price (₦)</label>
+                        <input type="number" class="form-input" id="addItemPrice" step="0.01" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addItemCost">Cost (₦)</label>
+                        <input type="number" class="form-input" id="addItemCost" step="0.01" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addItemStock">Stock Quantity</label>
+                        <input type="number" class="form-input" id="addItemStock" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addItemExpiry">Expiry Date</label>
+                        <input type="date" class="form-input" id="addItemExpiry" autocomplete="off">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="addItemModal">Cancel</button>
+                <button class="btn btn-primary js-add-item-confirm-btn">Add Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Inventory Modal -->
+    <div id="addInventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Product</h3>
+                <button class="modal-close js-modal-close" data-target="addInventoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addInventoryForm">
+                    <div class="form-group">
+                        <label class="form-label" for="addInventoryName">Product Name</label>
+                        <input type="text" class="form-input" id="addInventoryName" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addInventoryPrice">Price (₦)</label>
+                        <input type="number" class="form-input" id="addInventoryPrice" step="0.01" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addInventoryCost">Cost (₦)</label>
+                        <input type="number" class="form-input" id="addInventoryCost" step="0.01" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addInventoryStock">Stock Quantity</label>
+                        <input type="number" class="form-input" id="addInventoryStock" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addInventoryExpiry">Expiry Date</label>
+                        <input type="date" class="form-input" id="addInventoryExpiry" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addInventoryDescription">Description</label>
+                        <textarea class="form-input" id="addInventoryDescription" rows="3" autocomplete="off"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="addInventoryModal">Cancel</button>
+                <button class="btn btn-primary js-add-inventory-confirm-btn">Add Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Inventory Modal -->
+    <div id="editInventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Product</h3>
+                <button class="modal-close js-modal-close" data-target="editInventoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editInventoryForm">
+                    <div class="form-group">
+                        <label class="form-label" for="editInventoryName">Product Name</label>
+                        <input type="text" class="form-input" id="editInventoryName" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editInventoryPrice">Price (₦)</label>
+                        <input type="number" class="form-input" id="editInventoryPrice" step="0.01" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editInventoryCost">Cost (₦)</label>
+                        <input type="number" class="form-input" id="editInventoryCost" step="0.01" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editInventoryStock">Stock Quantity</label>
+                        <input type="number" class="form-input" id="editInventoryStock" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editInventoryExpiry">Expiry Date</label>
+                        <input type="date" class="form-input" id="editInventoryExpiry" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editInventoryDescription">Description</label>
+                        <textarea class="form-input" id="editInventoryDescription" rows="3" autocomplete="off"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="editInventoryModal">Cancel</button>
+                <button class="btn btn-primary js-update-inventory-btn">Update Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div id="addSupplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Supplier</h3>
+                <button class="modal-close js-modal-close" data-target="addSupplierModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addSupplierForm">
+                    <div class="form-group">
+                        <label class="form-label" for="addSupplierName">Supplier Name</label>
+                        <input type="text" class="form-input" id="addSupplierName" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addSupplierPhone">Phone</label>
+                        <input type="tel" class="form-input" id="addSupplierPhone" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addSupplierEmail">Email</label>
+                        <input type="email" class="form-input" id="addSupplierEmail" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addSupplierAddress">Address</label>
+                        <textarea class="form-input" id="addSupplierAddress" rows="3" autocomplete="off"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addSupplierProducts">Products</label>
+                        <textarea class="form-input" id="addSupplierProducts" rows="3" autocomplete="off"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="addSupplierModal">Cancel</button>
+                <button class="btn btn-primary js-add-supplier-confirm-btn">Add Supplier</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Supplier Modal -->
+    <div id="editSupplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Supplier</h3>
+                <button class="modal-close js-modal-close" data-target="editSupplierModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editSupplierForm">
+                    <div class="form-group">
+                        <label class="form-label" for="editSupplierName">Supplier Name</label>
+                        <input type="text" class="form-input" id="editSupplierName" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editSupplierPhone">Phone</label>
+                        <input type="tel" class="form-input" id="editSupplierPhone" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editSupplierEmail">Email</label>
+                        <input type="email" class="form-input" id="editSupplierEmail" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editSupplierAddress">Address</label>
+                        <textarea class="form-input" id="editSupplierAddress" rows="3" autocomplete="off"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editSupplierProducts">Products</label>
+                        <textarea class="form-input" id="editSupplierProducts" rows="3" autocomplete="off"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="editSupplierModal">Cancel</button>
+                <button class="btn btn-primary js-update-supplier-btn">Update Supplier</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Purchase Order Modal -->
+    <div id="addPurchaseOrderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Purchase Order</h3>
+                <button class="modal-close js-modal-close" data-target="addPurchaseOrderModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addPurchaseOrderForm">
+                    <div class="form-group">
+                        <label class="form-label" for="addPurchaseOrderSupplier">Supplier</label>
+                        <select class="form-input" id="addPurchaseOrderSupplier" autocomplete="off" required>
+                            <option value="">Select Supplier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addPurchaseOrderProduct">Product</label>
+                        <select class="form-input" id="addPurchaseOrderProduct" autocomplete="off" required>
+                            <option value="">Select Product</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addPurchaseOrderQuantity">Quantity</label>
+                        <input type="number" class="form-input" id="addPurchaseOrderQuantity" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addPurchaseOrderCost">Cost per Unit (₦)</label>
+                        <input type="number" class="form-input" id="addPurchaseOrderCost" step="0.01" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addPurchaseOrderDate">Order Date</label>
+                        <input type="date" class="form-input" id="addPurchaseOrderDate" autocomplete="off">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="addPurchaseOrderModal">Cancel</button>
+                <button class="btn btn-primary js-add-purchase-order-confirm-btn">Create Purchase Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Purchase Order Modal -->
+    <div id="editPurchaseOrderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Purchase Order</h3>
+                <button class="modal-close js-modal-close" data-target="editPurchaseOrderModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editPurchaseOrderForm">
+                    <div class="form-group">
+                        <label class="form-label" for="editPurchaseOrderQuantity">Quantity</label>
+                        <input type="number" class="form-input" id="editPurchaseOrderQuantity" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editPurchaseOrderCost">Cost per Unit (₦)</label>
+                        <input type="number" class="form-input" id="editPurchaseOrderCost" step="0.01" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editPurchaseOrderStatus">Status</label>
+                        <select class="form-input" id="editPurchaseOrderStatus" autocomplete="off">
+                            <option value="pending">Pending</option>
+                            <option value="received">Received</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="editPurchaseOrderModal">Cancel</button>
+                <button class="btn btn-primary js-update-purchase-order-btn">Update Purchase Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Complete Sale</h3>
+                <button class="modal-close js-modal-close" data-target="checkoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="checkout-summary">
+                    <!-- Checkout summary will be loaded here -->
+                </div>
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label class="form-label" for="paymentMethod">Payment Method</label>
+                        <select class="form-input" id="paymentMethod" autocomplete="off" data-label="Payment Method">
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="customerName">Customer Name (Optional)</label>
+                        <input type="text" class="form-input" id="customerName" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="customerPhone">Customer Phone (Optional)</label>
+                        <input type="tel" class="form-input" id="customerPhone" autocomplete="tel">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="checkoutModal">Cancel</button>
+                <button class="btn btn-primary js-complete-checkout-btn">Complete Sale</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POS (MART) Section -->
+    <div id="pos_mart-section" class="section-container">
+        <div class="department-header">
+            
+            <div class="department-title">
+                <i class="fas fa-credit-card"></i> POS (MART) Department
+            </div>
+        <div class="department-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-txn-total-volume">₦0.00</div>
+                <div class="stat-label">Total Volume</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-txn-total-charges">₦0.00</div>
+                <div class="stat-label">Total Charges</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-txn-total-transactions">0</div>
+                <div class="stat-label">Transactions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-opening-cash">₦0.00</div>
+                <div class="stat-label">Opening Cash</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-opening-pos">₦0.00</div>
+                <div class="stat-label">Opening POS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-opening-total">₦0.00</div>
+                <div class="stat-label">Opening Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-closing-cash">₦0.00</div>
+                <div class="stat-label">Closing Cash</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-closing-pos">₦0.00</div>
+                <div class="stat-label">Closing POS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos_mart-closing-total">₦0.00</div>
+                <div class="stat-label">Closing Total</div>
+            </div>
+        </div>
+        </div>
+        <div class="view-content active" id="pos_mart-pos-view">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Record Transaction</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-type">Type</label>
+                            <select class="form-input" id="pos_mart-txn-type" autocomplete="off">
+                                <option value="withdraw">Withdraw</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="deposit">Deposit</option>
+                                <option value="bill_payment">Bill Payment</option>
+                                <option value="airtime">Airtime</option>
+                                <option value="data">Data</option>
+                                <option value="pos_purchase">POS Purchase</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-amount">Amount</label>
+                            <input class="form-input" id="pos_mart-txn-amount" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-charge">Merchant Charge</label>
+                            <input class="form-input" id="pos_mart-txn-charge" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-pos-charge">POS Charge</label>
+                            <input class="form-input" id="pos_mart-txn-pos-charge" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-phone">Customer Phone</label>
+                            <input class="form-input" id="pos_mart-txn-phone" type="tel" autocomplete="tel">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-ref">Reference</label>
+                            <input class="form-input" id="pos_mart-txn-ref" type="text" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-txn-notes">Notes</label>
+                            <input class="form-input" id="pos_mart-txn-notes" type="text" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-opening-cash-input">Opening Cash</label>
+                            <input class="form-input" id="pos_mart-opening-cash-input" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos_mart-opening-pos-input">Opening POS</label>
+                            <input class="form-input" id="pos_mart-opening-pos-input" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-secondary js-set-opening-btn" data-section="pos_mart">Set Opening</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary js-record-transaction-btn" data-section="pos_mart">Record Transaction</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Transactions</h2>
+                </div>
+                <div class="card-body js-transactions-container" data-section="pos_mart">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-receipt"></i></div>
+                        <h3 class="empty-state-title">No Transactions</h3>
+                        <p class="empty-state-description">Record your first transaction to see it here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POS1 Section -->
+    <div id="pos1-section" class="section-container">
+        <div class="department-header">
+            <div class="department-title">
+                <i class="fas fa-credit-card"></i> POS1 Department
+            </div>
+        <div class="department-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-txn-total-volume">₦0.00</div>
+                <div class="stat-label">Total Volume</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-txn-total-charges">₦0.00</div>
+                <div class="stat-label">Total Charges</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-txn-total-transactions">0</div>
+                <div class="stat-label">Transactions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-opening-cash">₦0.00</div>
+                <div class="stat-label">Opening Cash</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-opening-pos">₦0.00</div>
+                <div class="stat-label">Opening POS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-opening-total">₦0.00</div>
+                <div class="stat-label">Opening Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-closing-cash">₦0.00</div>
+                <div class="stat-label">Closing Cash</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-closing-pos">₦0.00</div>
+                <div class="stat-label">Closing POS</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pos1-closing-total">₦0.00</div>
+                <div class="stat-label">Closing Total</div>
+            </div>
+        </div>
+        </div>
+        <div class="view-content active" id="pos1-pos-view">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Record Transaction</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-type">Type</label>
+                            <select class="form-input" id="pos1-txn-type" autocomplete="off">
+                                <option value="withdraw">Withdraw</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="deposit">Deposit</option>
+                                <option value="bill_payment">Bill Payment</option>
+                                <option value="airtime">Airtime</option>
+                                <option value="data">Data</option>
+                                <option value="pos_purchase">POS Purchase</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-amount">Amount</label>
+                            <input class="form-input" id="pos1-txn-amount" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-charge">Merchant Charge</label>
+                            <input class="form-input" id="pos1-txn-charge" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-pos-charge">POS Charge</label>
+                            <input class="form-input" id="pos1-txn-pos-charge" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-phone">Customer Phone</label>
+                            <input class="form-input" id="pos1-txn-phone" type="tel" autocomplete="tel">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-ref">Reference</label>
+                            <input class="form-input" id="pos1-txn-ref" type="text" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-txn-notes">Notes</label>
+                            <input class="form-input" id="pos1-txn-notes" type="text" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-opening-cash-input">Opening Cash</label>
+                            <input class="form-input" id="pos1-opening-cash-input" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pos1-opening-pos-input">Opening POS</label>
+                            <input class="form-input" id="pos1-opening-pos-input" type="number" step="0.01" autocomplete="off">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-secondary js-set-opening-btn" data-section="pos1">Set Opening</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary js-record-transaction-btn" data-section="pos1">Record Transaction</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Transactions</h2>
+                </div>
+                <div class="card-body js-transactions-container" data-section="pos1">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-receipt"></i></div>
+                        <h3 class="empty-state-title">No Transactions</h3>
+                        <p class="empty-state-description">Record your first transaction to see it here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Reset Password</h3>
+                <button class="modal-close js-modal-close" data-target="forgotPasswordModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Enter your email address to receive a password reset link:</p>
+                <div class="form-group">
+                    <label class="form-label" for="resetEmail">Email Address</label>
+                    <input type="email" class="form-input" id="resetEmail" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <div id="reset-password-error" class="error-message"></div>
+                <div id="reset-password-success" class="success-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary js-modal-close" data-target="forgotPasswordModal">Cancel</button>
+                <button class="btn btn-primary js-reset-password-btn">Send Reset Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi"></i> You're offline. Changes will sync when connection is restored.
+    </div>
+
+    <!-- Sync Status -->
+    <div id="syncStatus" class="sync-status">
+        <i class="fas fa-sync"></i> Syncing data...
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
