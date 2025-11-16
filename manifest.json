@@ -1,8 +1,10 @@
 {
+  "id": "pa-gerrys-pos",
   "name": "Pa Gerry's Point of Sale",
   "short_name": "Pa Gerry's POS",
   "description": "A comprehensive point of sale system for managing inventory and sales",
-  "start_url": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#e67e22",
@@ -16,13 +18,13 @@
     },
     {
       "src": "icons/icon-192.svg",
-      "sizes": "any",
+      "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
       "src": "icons/icon-512.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }

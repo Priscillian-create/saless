@@ -15,7 +15,7 @@ const sectionNames = {
 // Initialize data structures
 const dataStores = {
   inventory: {}, carts: {}, salesData: {}, purchaseData: {}, 
-  userData: {}, suppliers: {}, purchaseOrders: {}, transactions: {}, transactionData: {}, balances: {}, sales: {}, purchases: {}
+  userData: {}, suppliers: {}, purchaseOrders: {}, transactions: {}, transactionData: {}, balances: {}, openingCutoff: {}, sales: {}, purchases: {}
 };
 
 // Initialize empty data for each section
@@ -37,12 +37,13 @@ sections.forEach(section => {
   dataStores.transactionData[section] = {
     totalVolume: 0, totalCharges: 0, totalTransactions: 0,
     byType: {
-      withdraw: 0, transfer: 0, deposit: 0, bill_payment: 0, airtime: 0, data: 0, pos_purchase: 0
+      withdraw: 0, transfer_in: 0, transfer_out: 0, deposit: 0, bill_payment: 0, airtime: 0, data: 0, pos_purchase: 0
     }
   };
   dataStores.balances[section] = {};
+  dataStores.openingCutoff[section] = {};
   dataStores.sales[section] = [];
-  dataStores.purchases[section] = [];
+dataStores.purchases[section] = [];
 });
 
 // App state
@@ -50,6 +51,8 @@ let currentSection = 'grill';
 let currentView = 'pos';
 let currentFilter = 'all';
 let currentUser = null;
+let selectedDate = {};
+sections.forEach(section => { selectedDate[section] = new Date().toISOString().split('T')[0]; });
 
 // Utility functions
 const utils = {
@@ -127,6 +130,25 @@ const utils = {
     notification.className = `notification ${type}`;
     notification.classList.add('show');
     setTimeout(() => notification.classList.remove('show'), 3000);
+  },
+  downloadCSV: (filename, headers, rows) => {
+    const escape = (val) => {
+      if (val === null || val === undefined) return '';
+      const s = String(val).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    };
+    const headerLine = headers.map(escape).join(',');
+    const dataLines = rows.map(r => headers.map(h => escape(r[h])).join(','));
+    const csv = [headerLine, ...dataLines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 };
 
@@ -179,6 +201,19 @@ const dataManager = {
         description: d.description, status: d.status,
         created_by: (currentUser ? currentUser.id : safeCreatedBy), created_at: d.created_at,
         updated_by: (currentUser ? currentUser.id : safeUpdatedBy), updated_at: d.updated_at
+      };
+    }
+    if (table === 'daily_balances') {
+      const safeCreatedBy = (typeof d.created_by === 'string' && (d.created_by.startsWith('offline_') || d.created_by === 'offline_user')) ? null : d.created_by;
+      return {
+        section: d.section,
+        balance_date: d.balance_date,
+        opening_cash: d.opening_cash,
+        opening_pos: d.opening_pos,
+        closing_cash: d.closing_cash,
+        closing_pos: d.closing_pos,
+        recorded_at: d.recorded_at,
+        created_by: (currentUser ? currentUser.id : safeCreatedBy)
       };
     }
     if (table === 'suppliers') {
@@ -471,6 +506,27 @@ const dataManager = {
       utils.saveToLocalStorage(`transactionData_${section}`, dataStores.transactionData[section]);
       uiManager.loadTransactionsTable(section);
       uiManager.updateTransactionAnalytics(section);
+    } else if (table === 'daily_balances') {
+      const section = data.section;
+      const payload = dataManager.serializeForSupabase('daily_balances', data);
+      const { data: resultData, error } = await supabase
+        .from('daily_balances')
+        .upsert(payload, { onConflict: 'section,balance_date' })
+        .select();
+      if (error) throw error;
+      const d = data.balance_date;
+      const existing = dataStores.balances[section][d] || {};
+      dataStores.balances[section][d] = {
+        ...existing,
+        openingCash: data.opening_cash !== undefined ? data.opening_cash : existing.openingCash,
+        openingPos: data.opening_pos !== undefined ? data.opening_pos : existing.openingPos,
+        closingCash: data.closing_cash !== undefined ? data.closing_cash : existing.closingCash,
+        closingPos: data.closing_pos !== undefined ? data.closing_pos : existing.closingPos,
+        recordedAt: data.recorded_at || existing.recordedAt
+      };
+      utils.saveToLocalStorage(`balances_${section}`, dataStores.balances[section]);
+      uiManager.loadDailyBalancesTable(section);
+      uiManager.updateDepartmentStats(section);
     }
     
     return { id };
@@ -856,7 +912,7 @@ const dataManager = {
               totalCharges: 0,
               totalTransactions: 0,
               byType: {
-                withdraw: 0, transfer: 0, deposit: 0, bill_payment: 0, airtime: 0, data: 0, pos_purchase: 0
+                withdraw: 0, transfer_in: 0, transfer_out: 0, deposit: 0, bill_payment: 0, airtime: 0, data: 0, pos_purchase: 0
               }
             };
             dataStores.transactions[section].forEach(tx => {
@@ -918,6 +974,37 @@ const dataManager = {
             uiManager.loadPurchasesTable(section);
             uiManager.updatePurchaseReports(section);
             uiManager.updateFinancialReports(section);
+        });
+      });
+
+      // Load daily balances
+      sections.forEach(section => {
+        supabase
+          .from('daily_balances')
+          .select('*')
+          .eq('section', section)
+          .then(({ data, error }) => {
+            if (error) {
+              console.warn(`Error loading ${section} daily balances:`, error);
+              return;
+            }
+            const remote = Array.isArray(data) ? data : [];
+            const merged = { ...(dataStores.balances[section] || {}) };
+            remote.forEach(row => {
+              const d = row.balance_date;
+              merged[d] = {
+                ...(merged[d] || {}),
+                openingCash: row.opening_cash ?? (merged[d] ? merged[d].openingCash : undefined),
+                openingPos: row.opening_pos ?? (merged[d] ? merged[d].openingPos : undefined),
+                closingCash: row.closing_cash ?? (merged[d] ? merged[d].closingCash : undefined),
+                closingPos: row.closing_pos ?? (merged[d] ? merged[d].closingPos : undefined),
+                recordedAt: row.recorded_at ?? (merged[d] ? merged[d].recordedAt : undefined)
+              };
+            });
+            dataStores.balances[section] = merged;
+            utils.saveToLocalStorage(`balances_${section}`, dataStores.balances[section]);
+            uiManager.loadDailyBalancesTable(section);
+            uiManager.updateDepartmentStats(section);
           });
       });
     } catch (error) {
@@ -990,15 +1077,103 @@ const uiManager = {
       setOpeningBtn.addEventListener('click', () => {
         const cash = parseFloat(openingCashInput.value) || 0;
         const pos = parseFloat(openingPosInput.value) || 0;
-        const today = utils.getTodayDate();
-        dataStores.balances[section][today] = { openingCash: cash, openingPos: pos };
+        const dateSel = selectedDate[section] || utils.getTodayDate();
+        dataStores.balances[section][dateSel] = { openingCash: cash, openingPos: pos };
+        dataStores.openingCutoff[section][dateSel] = new Date().toISOString();
         utils.saveToLocalStorage(`balances_${section}`, dataStores.balances[section]);
+        utils.saveToLocalStorage(`openingCutoff_${section}`, dataStores.openingCutoff[section]);
+        if (navigator.onLine) {
+          const row = {
+            section,
+            balance_date: dateSel,
+            opening_cash: cash,
+            opening_pos: pos,
+            recorded_at: new Date().toISOString(),
+            created_by: currentUser ? currentUser.id : 'offline_user'
+          };
+          dataManager.saveDataToSupabase('daily_balances', row)
+            .catch(err => console.error('Error saving opening daily balance:', err));
+        } else {
+          const pending = utils.loadFromLocalStorage('pendingChanges', {});
+          pending.daily_balances = pending.daily_balances || { new: [] };
+          pending.daily_balances.new.push({
+            id: utils.generateOfflineId(),
+            section,
+            balance_date: dateSel,
+            opening_cash: cash,
+            opening_pos: pos,
+            recorded_at: new Date().toISOString(),
+            created_by: currentUser ? currentUser.id : 'offline_user'
+          });
+          utils.saveToLocalStorage('pendingChanges', pending);
+        }
         uiManager.updateTransactionAnalytics(section);
         utils.showNotification('Opening balance set', 'success');
+        openingCashInput.value = '';
+        openingPosInput.value = '';
       });
     }
 
-    // Charges are entered manually per user's preference
+    const dateInput = document.getElementById(`${section}-date-selector`);
+    if (dateInput) {
+      if (!dateInput.value) dateInput.value = selectedDate[section];
+      dateInput.addEventListener('change', () => {
+        selectedDate[section] = dateInput.value || utils.getTodayDate();
+        uiManager.updateTransactionAnalytics(section);
+        uiManager.loadTransactionsTable(section);
+        uiManager.updateDepartmentStats(section);
+      });
+    }
+
+    const dbDate = document.getElementById(`${section}-daily-balance-date`);
+    const saveBtn = document.querySelector(`.js-save-daily-balance-btn[data-section="${section}"]`);
+    const cashInput = document.getElementById(`${section}-closing-cash-input`);
+    const posInput = document.getElementById(`${section}-closing-pos-input`);
+    if (dbDate && !dbDate.value) dbDate.value = selectedDate[section];
+    if (saveBtn && cashInput && posInput) {
+      saveBtn.addEventListener('click', () => {
+        const d = (dbDate && dbDate.value) ? dbDate.value : (selectedDate[section] || utils.getTodayDate());
+        const c = parseFloat(cashInput.value) || 0;
+        const p = parseFloat(posInput.value) || 0;
+        dataStores.balances[section][d] = { ...(dataStores.balances[section][d] || {}), closingCash: c, closingPos: p, recordedAt: new Date().toISOString() };
+        utils.saveToLocalStorage(`balances_${section}`, dataStores.balances[section]);
+        if (navigator.onLine) {
+          const row = {
+            section,
+            balance_date: d,
+            closing_cash: c,
+            closing_pos: p,
+            recorded_at: new Date().toISOString(),
+            created_by: currentUser ? currentUser.id : 'offline_user'
+          };
+          dataManager.saveDataToSupabase('daily_balances', row)
+            .catch(err => console.error('Error saving daily balance:', err));
+        } else {
+          const pending = utils.loadFromLocalStorage('pendingChanges', {});
+          pending.daily_balances = pending.daily_balances || { new: [] };
+          pending.daily_balances.new.push({
+            id: utils.generateOfflineId(),
+            section,
+            balance_date: d,
+            closing_cash: c,
+            closing_pos: p,
+            recorded_at: new Date().toISOString(),
+            created_by: currentUser ? currentUser.id : 'offline_user'
+          });
+          utils.saveToLocalStorage('pendingChanges', pending);
+        }
+        uiManager.loadDailyBalancesTable(section);
+        uiManager.updateDepartmentStats(section);
+        utils.showNotification('Daily balance saved', 'success');
+        cashInput.value = '';
+        posInput.value = '';
+      });
+      if (dbDate) {
+        dbDate.addEventListener('change', () => {
+          uiManager.loadDailyBalancesTable(section);
+        });
+      }
+    }
 
       const form = document.getElementById(`${section}-account-form`);
       if (form) {
@@ -1245,7 +1420,7 @@ const uiManager = {
       return;
     }
     const table = document.createElement('table');
-    table.className = 'inventory-table';
+    table.className = 'inventory-table transactions-table';
     table.innerHTML = `
       <thead>
         <tr>
@@ -1585,6 +1760,16 @@ const uiManager = {
   filterTotalInventory: (searchTerm) => {
     uiManager.loadTotalInventoryTable();
   },
+
+  loadDailyBalancesTable: (section) => {
+    const tbody = document.getElementById(`${section}-daily-balances-table`);
+    if (!tbody) return;
+    const entries = Object.entries(dataStores.balances[section] || {})
+      .map(([date, obj]) => ({ date, cash: Number(obj.closingCash) || 0, pos: Number(obj.closingPos) || 0 }))
+      .filter(e => (e.cash !== 0 || e.pos !== 0));
+    entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+    tbody.innerHTML = entries.map(e => `<tr><td>${e.date}</td><td>₦${e.cash.toFixed(2)}</td><td>₦${e.pos.toFixed(2)}</td></tr>`).join('');
+  },
   
   updateCategoryInventorySummary: (section) => {
     let totalProducts = 0;
@@ -1631,14 +1816,27 @@ const uiManager = {
   },
   
   updateReports: (section) => {
-    const totalSales = dataStores.salesData[section]?.totalSales || 0;
-    const avgTransaction = dataStores.salesData[section]?.avgTransaction || 0;
-    const profit = dataStores.salesData[section]?.profit || 0;
-    const profitMargin = dataStores.salesData[section]?.profitMargin || 0;
+    const sel = selectedDate[section] || null;
+    let totalSales, avgTransaction, profit, profitMargin, totalTransactions;
+    const isPos = (section === 'pos_mart' || section === 'pos1');
+    if (isPos && sel) {
+      const records = (dataStores.sales[section] || []).filter(r => ((r.timestamp || '').split('T')[0]) === sel);
+      totalTransactions = records.length;
+      totalSales = records.reduce((sum, r) => sum + (Number(r.total) || 0), 0);
+      profit = records.reduce((sum, r) => sum + (uiManager.calculateSaleProfitForSection(r.items || [], section) || 0), 0);
+      avgTransaction = totalTransactions > 0 ? (totalSales / totalTransactions) : 0;
+      profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
+    } else {
+      totalSales = dataStores.salesData[section]?.totalSales || 0;
+      avgTransaction = dataStores.salesData[section]?.avgTransaction || 0;
+      profit = dataStores.salesData[section]?.profit || 0;
+      profitMargin = dataStores.salesData[section]?.profitMargin || 0;
+      totalTransactions = dataStores.salesData[section]?.totalTransactions || 0;
+    }
     
     const elements = [
       { id: `${section}-total-sales`, value: `₦${totalSales.toFixed(2)}` },
-      { id: `${section}-total-transactions`, value: dataStores.salesData[section]?.totalTransactions || 0 },
+      { id: `${section}-total-transactions`, value: totalTransactions || (dataStores.salesData[section]?.totalTransactions || 0) },
       { id: `${section}-avg-transaction`, value: `₦${avgTransaction.toFixed(2)}` },
       { id: `${section}-top-item`, value: dataStores.salesData[section]?.topItem || '-' },
       { id: `${section}-total-profit`, value: `₦${profit.toFixed(2)}` },
@@ -1782,6 +1980,22 @@ const uiManager = {
       const element = document.getElementById(el.id);
       if (element) element.textContent = el.value;
     });
+    const sel = selectedDate[section] || new Date().toISOString().split('T')[0];
+    const recorded = dataStores.balances[section][sel] || {};
+    let cash = 0;
+    let pos = 0;
+    if (recorded.closingCash !== undefined || recorded.closingPos !== undefined) {
+      cash = Number(recorded.closingCash) || 0;
+      pos = Number(recorded.closingPos) || 0;
+    } else {
+      const sales = (dataStores.sales[section] || []).filter(s => ((s.timestamp || '').split('T')[0]) === sel);
+      cash = sales.filter(s => (String(s.payment_method || '').toLowerCase() === 'cash')).reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+      pos = sales.filter(s => (String(s.payment_method || '').toLowerCase().includes('pos'))).reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+    }
+    const cashEl = document.getElementById(`${section}-daily-cash-balance`);
+    const posEl = document.getElementById(`${section}-daily-pos-balance`);
+    if (cashEl) cashEl.textContent = `₦${cash.toFixed(2)}`;
+    if (posEl) posEl.textContent = `₦${pos.toFixed(2)}`;
   },
   
   resetToPOSView: (section) => {
@@ -1844,27 +2058,38 @@ const uiManager = {
     if (totalVolumeEl) totalVolumeEl.textContent = `₦${Number(stats.totalVolume).toFixed(2)}`;
     if (totalChargesEl) totalChargesEl.textContent = `₦${Number(stats.totalCharges).toFixed(2)}`;
     if (totalTransactionsEl) totalTransactionsEl.textContent = `${stats.totalTransactions}`;
-    const today = utils.getTodayDate();
-    const opening = dataStores.balances[section][today] || { openingCash: 0, openingPos: 0 };
+    const selected = selectedDate[section] || utils.getTodayDate();
+    const opening = dataStores.balances[section][selected] || { openingCash: 0, openingPos: 0 };
     let cashDelta = 0;
     let posDelta = 0;
     let machineChargesTotal = 0;
+    let chargesToday = 0;
+    let transactionsToday = 0;
+    let volumeToday = 0;
+    const cutoff = (dataStores.openingCutoff[section] && dataStores.openingCutoff[section][selected]) || null;
     dataStores.transactions[section].forEach(tx => {
       const txDate = (tx.timestamp || '').split('T')[0];
-      if (txDate === today) {
+      const t = (tx.timestamp ? new Date(tx.timestamp).toISOString() : null);
+      if (txDate === selected && (!cutoff || (t && t >= cutoff))) {
         const amount = Number(tx.amount) || 0;
         const charge = Number(tx.charge) || 0;
         const machineCharge = Number(tx.pos_charge) || 0;
         machineChargesTotal += machineCharge;
+        chargesToday += charge;
+        transactionsToday += 1;
+        volumeToday += amount;
         if (tx.type === 'withdraw') {
           cashDelta += -amount + charge;
           posDelta += amount - machineCharge;
-        } else if (tx.type === 'transfer') {
+        } else if (tx.type === 'transfer_in') {
+          cashDelta += -amount + charge;
+          posDelta += amount - machineCharge;
+        } else if (tx.type === 'transfer_out') {
           cashDelta += charge;
           posDelta += -amount - machineCharge;
         } else if (tx.type === 'deposit') {
-          cashDelta += amount + charge;
-          posDelta += -amount - machineCharge;
+          cashDelta += amount;
+          posDelta += -(amount - charge) - machineCharge;
         } else if (tx.type === 'bill_payment' || tx.type === 'airtime' || tx.type === 'data') {
           cashDelta += amount + charge;
           posDelta += -amount;
@@ -1874,6 +2099,11 @@ const uiManager = {
         }
       }
     });
+    const profitToday = chargesToday - machineChargesTotal;
+    const machineChargesTodayEl = document.getElementById(`${section}-txn-machine-charges-today`);
+    const profitTodayEl = document.getElementById(`${section}-txn-profit-today`);
+    if (machineChargesTodayEl) machineChargesTodayEl.textContent = `₦${Number(machineChargesTotal).toFixed(2)}`;
+    if (profitTodayEl) profitTodayEl.textContent = `₦${Number(profitToday).toFixed(2)}`;
     const openingCashEl = document.getElementById(`${section}-opening-cash`);
     const openingPosEl = document.getElementById(`${section}-opening-pos`);
     const openingTotalEl = document.getElementById(`${section}-opening-total`);
@@ -1894,7 +2124,10 @@ const uiManager = {
   loadSalesTable: (section) => {
     const containers = document.querySelectorAll(`.js-sales-container[data-section="${section}"]`);
     if (!containers || containers.length === 0) return;
-    const records = [...(dataStores.sales[section] || [])].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const all = [...(dataStores.sales[section] || [])];
+    const sel = selectedDate[section] || null;
+    const records = sel ? all.filter(r => ((r.timestamp || '').split('T')[0]) === sel) : all;
+    records.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
     const buildTableHTML = () => {
       if (records.length === 0) {
         return `
@@ -2027,12 +2260,14 @@ const uiManager = {
     const container = document.querySelector(`.js-transactions-container[data-section="${section}"]`);
     if (!container) return;
     const records = [...dataStores.transactions[section]].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-    if (records.length === 0) {
+    const sel = selectedDate[section] || utils.getTodayDate();
+    const filtered = records.filter(r => ((r.timestamp || '').split('T')[0]) === sel);
+    if (filtered.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon"><i class="fas fa-receipt"></i></div>
           <h3 class="empty-state-title">No Transactions</h3>
-          <p class="empty-state-description">Record your first transaction to see it here.</p>
+          <p class="empty-state-description">No transactions for the selected date. Record a transaction or pick another date.</p>
         </div>
       `;
       return;
@@ -2054,7 +2289,7 @@ const uiManager = {
       <tbody></tbody>
     `;
     const tbody = table.querySelector('tbody');
-    records.forEach(tx => {
+    filtered.forEach(tx => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${tx.type}</td>
@@ -2218,7 +2453,7 @@ const cartManager = {
       payment_method: document.getElementById('paymentMethod').value,
       customer_name: document.getElementById('customerName').value,
       customer_phone: document.getElementById('customerPhone').value,
-      timestamp: new Date().toISOString()
+      timestamp: selectedDate[section] || utils.getTodayDate()
     };
     
     dataManager.saveDataToSupabase('sales', saleRecord).then(() => {
@@ -2330,6 +2565,9 @@ const transactionManager = {
     const reference = (document.getElementById(`${section}-txn-ref`)?.value || '').trim();
     const customer_phone = (document.getElementById(`${section}-txn-phone`)?.value || '').trim();
     const notes = (document.getElementById(`${section}-txn-notes`)?.value || '').trim();
+    const dateStr = selectedDate[section] || utils.getTodayDate();
+    const timeStr = new Date().toTimeString().split(' ')[0];
+    const ts = new Date(`${dateStr}T${timeStr}`).toISOString();
     const txRecord = {
       user_id: currentUser ? currentUser.id : 'offline_user',
       user_email: currentUser ? currentUser.email : '',
@@ -2341,7 +2579,7 @@ const transactionManager = {
       reference,
       customer_phone,
       notes,
-      timestamp: new Date().toISOString()
+      timestamp: ts
     };
     dataManager.saveDataToSupabase('transactions', txRecord).then(() => {
       uiManager.updateTransactionAnalytics(section);
@@ -2898,7 +3136,9 @@ const authManager = {
 document.addEventListener('DOMContentLoaded', function() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      const swUrl = './sw.js';
+      const opts = { scope: './' };
+      navigator.serviceWorker.register(swUrl, opts).catch(() => {});
     });
   }
   const maybeHideInstall = () => {
@@ -2999,6 +3239,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.sub-nav').forEach(nav => {
     nav.querySelectorAll('.sub-nav-item').forEach(item => {
       if (item.getAttribute('data-view') !== 'categories') item.style.display = 'none';
+      
     });
   });
   
@@ -3334,7 +3575,35 @@ document.querySelectorAll('.js-section-tab').forEach(button => {
       uiManager.loadPurchasesTable(section);
     } else if (target === 'account') {
       uiManager.updateUserStats(section);
+    } else if (target === 'daily-balances') {
+      uiManager.loadDailyBalancesTable(section);
     }
+  });
+});
+
+document.querySelectorAll('.js-export-transactions-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    const section = button.getAttribute('data-section');
+    const sel = selectedDate[section] || utils.getTodayDate();
+    const records = (dataStores.transactions[section] || []).filter(r => ((r.timestamp || '').split('T')[0]) === sel);
+    if (records.length === 0) {
+      utils.showNotification('No transactions for selected date', 'warning');
+      return;
+    }
+    const headers = ['Date','Type','Amount','MerchantCharge','POSCharge','Phone','Reference','Notes'];
+    const rows = records.map(r => ({
+      Date: (r.timestamp || '').split('T')[0],
+      Type: r.type || '',
+      Amount: Number(r.amount || 0).toFixed(2),
+      MerchantCharge: Number(r.charge || 0).toFixed(2),
+      POSCharge: Number(r.pos_charge || 0).toFixed(2),
+      Phone: r.customer_phone || '',
+      Reference: r.reference || '',
+      Notes: r.notes || ''
+    }));
+    const filename = `${section}_transactions_${sel}.csv`;
+    utils.downloadCSV(filename, headers, rows);
+    utils.showNotification('Daily report exported', 'success');
   });
 });
 
