@@ -1,7 +1,7 @@
 :root {
   --primary-color: #e67e22;
   --secondary-color: #2c3e50;
-  --background-color: #f8f9fa;
+  --background-color: #fff4e6;
   --card-color: #ffffff;
   --text-color: #333333;
   --text-muted: #6c757d;
@@ -26,8 +26,30 @@
 
 body {
   background-color: var(--background-color);
+  background-image: linear-gradient(180deg, #fff4e6 0%, #ffe6cc 100%);
   color: var(--text-color);
   line-height: 1.6;
+}
+
+header .header-container,
+nav .nav-container,
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+main .section-container,
+.card {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.department-stats {
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 /* Screen reader only class for accessibility */
@@ -298,10 +320,11 @@ nav {
 .nav-tabs {
   display: flex;
   overflow-x: auto;
+  gap: 0.5rem;
 }
 
 .nav-tab {
-  padding: 1rem 1.5rem;
+  padding: 0.8rem 1.2rem;
   cursor: pointer;
   font-weight: 600;
   border-bottom: 3px solid transparent;
@@ -310,6 +333,7 @@ nav {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  border-radius: 10px;
 }
 
 .nav-tab:hover {
@@ -319,6 +343,7 @@ nav {
 .nav-tab.active {
   border-bottom-color: var(--primary-color);
   color: var(--primary-color);
+  background-color: rgba(230,126,34,0.08);
 }
 
 .nav-tab.grill.active {
@@ -359,9 +384,9 @@ main {
 /* Department Header */
 .department-header {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem 1.25rem;
   margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -473,9 +498,9 @@ main {
 /* Card Styles */
 .card {
   background-color: var(--card-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
   margin-bottom: 1.5rem;
 }
 
@@ -496,13 +521,13 @@ main {
 /* Categories Tab Bar */
 .section-tabs {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.5rem;
-  padding: 0.5rem;
+  padding: 0.75rem;
   background-color: white;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-  overflow-x: auto;
 }
 
 /* Financial Summary */
@@ -581,16 +606,18 @@ main {
 
 .section-tab {
   flex: 0 0 auto;
-  padding: 0.5rem 0.9rem;
+  padding: 0.8rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 999px;
+  border-radius: 10px;
   background: white;
   font-weight: 600;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  width: 100%;
+  text-align: left;
 }
 
 .section-tab:hover {
@@ -896,7 +923,7 @@ main {
 
 .inventory-table th,
 .inventory-table td {
-  padding: 1rem;
+  padding: 0.85rem 0.9rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
@@ -908,6 +935,10 @@ main {
 
 .inventory-table tr:hover {
   background-color: rgba(0, 0, 0, 0.02);
+}
+
+.inventory-table tr:nth-child(even) {
+  background-color: rgba(0,0,0,0.015);
 }
 
 .status-badge {
@@ -1513,4 +1544,55 @@ main {
   color: var(--primary-color);
   background-color: transparent;
   margin-top: 0.5rem;
+}
+.department-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+@media (max-width: 480px) {
+  body { font-size: 0.95rem; }
+  .card { padding: 1rem; }
+  .card-title { font-size: 1.2rem; }
+  .department-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .department-title { font-size: 1.2rem; }
+  .department-stats { gap: 0.75rem; flex-wrap: wrap; }
+  .stat-value { font-size: 1.2rem; }
+  .stat-label { font-size: 0.85rem; }
+  .section-tabs { gap: 0.4rem; }
+  .form-input, .filter-input, .search-input, .pos-search-input { padding: 0.6rem 0.7rem; font-size: 0.95rem; }
+  header .header-container { padding-left: 8px; padding-right: 8px; }
+  nav .nav-container { padding-left: 8px; padding-right: 8px; }
+  main .section-container { padding-left: 8px; padding-right: 8px; max-width: 420px; margin-left: auto; margin-right: auto; }
+
+  /* Transactions table: hide less important columns */
+  .transactions-table th:nth-child(5),
+  .transactions-table td:nth-child(5),
+  .transactions-table th:nth-child(6),
+  .transactions-table td:nth-child(6) { display: none; }
+}
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.category-list-item {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: white;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  width: 100%;
+  text-align: left;
+}
+.category-list-item:hover { background-color: var(--light-gray); }
+.category-list-item.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
 }
